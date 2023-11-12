@@ -1,7 +1,8 @@
-import TitleHelmet from '../Components/TitleHelmet/TitleHelmet';
-import Cover from '../Pages/Shared/Cover/Cover';
-import bgimg from '../assets/menu/banner3.jpg';
-import PopularMenu from '../Pages/Home/PopularMenu/PopularMenu';
+import bgimg from '../../../assets/menu/banner3.jpg';
+
+import TitleHelmet from '../../../Components/TitleHelmet/TitleHelmet';
+import PopularMenu from '../../Home/PopularMenu/PopularMenu';
+import Cover from '../../Shared/Cover/Cover';
 
 const Menu = () => {
   return (
