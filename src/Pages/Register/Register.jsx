@@ -1,12 +1,18 @@
 import { useContext, useState } from 'react';
 import TitleHelmet from '../../Components/TitleHelmet/TitleHelmet';
 import { AuthContext } from '../../Providers/AuthProvider';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaSquareCheck } from 'react-icons/fa6';
 import { updateProfile } from 'firebase/auth';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
+import Swal from 'sweetalert2';
 
 const Register = () => {
-  const { createUser } = useContext(AuthContext);
+  const { createUser, signInWithGoogle } = useContext(AuthContext);
+  const axiosPublic = useAxiosPublic();
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [registerError, setRegisterError] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState('');
@@ -16,7 +22,7 @@ const Register = () => {
     const form = e.target;
     const name = form.name.value;
     const email = form.email.value;
-    const photo = form.photo.value;
+    // const photo = form.photo.value;
     const password = form.password.value;
     console.log(email, password);
 
@@ -36,21 +42,65 @@ const Register = () => {
       return;
     }
 
-    createUser(email, password)
+    createUser(email, password).then((result) => {
+      const loggedUser = result.user;
+      console.log(loggedUser);
+      updateProfile(email, password)
+        .then(() => {
+          // create user entry in the database
+          const userInfo = {
+            name: name,
+            email: email,
+          };
+          axiosPublic.post('/users', userInfo).then((res) => {
+            if (res.data.insertedId) {
+              console.log('user added to the database');
+              // reset();
+              Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'User created successfully.',
+                showConfirmButton: false,
+                timer: 1500,
+              });
+              navigate(location?.state ? location.state : '/');
+            }
+          });
+        })
+        .catch((error) => console.log(error));
+    });
+  };
+
+  //   createUser(email, password)
+  //     .then((result) => {
+  //       const loggedUser = result.user;
+  //       console.log(loggedUser);
+  //       setRegisterSuccess('Your Account Successfully created');
+  //       form.reset();
+
+  //       // update profile
+  //       updateProfile(result.user, {
+  //         displayName: name,
+  //         photoURL: photo,
+  //       });
+  //       navigate(location?.state ? location.state : '/');
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //       setRegisterError(error.message);
+  //     });
+  // };
+
+  //   Google sign in
+  const handleGoogleSignIn = () => {
+    signInWithGoogle()
       .then((result) => {
         console.log(result.user);
-        setRegisterSuccess('Your Account Successfully created');
-        form.reset();
-
-        // update profile
-        updateProfile(result.user, {
-          displayName: name,
-          photoURL: photo,
-        });
+        // navigate after login
+        navigate(location?.state ? location.state : '/');
       })
       .catch((error) => {
         console.log(error);
-        setRegisterError(error.message);
       });
   };
 
@@ -146,6 +196,17 @@ const Register = () => {
                 </p>
               )}
             </div>
+            {/* Google Login */}
+            <div className="text-center mt-5 ">
+              <p className="my-3 font-bold">---- or ----</p>
+              <button
+                onClick={handleGoogleSignIn}
+                className="bg-[#3a77d9] hover:bg-[#628fd7] px-4 py-2 rounded-md text-white"
+              >
+                Login with Google
+              </button>
+            </div>
+            {/* google signin end */}
           </form>
         </div>
       </div>
